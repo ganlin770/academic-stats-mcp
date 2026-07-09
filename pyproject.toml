@@ -1,0 +1,12 @@
+[project]
+name = "academic-stats-advisor"
+version = "0.1.0"
+description = "MCP server exposing a statistician's decision logic: pick the right test, check assumptions, interpret p-values, plan sample size (SPSS/R aware)."
+requires-python = ">=3.10"
+dependencies = ["mcp>=1.2.0"]
+license = {text = "MIT"}
+readme = "README.md"
+keywords = ["mcp", "model-context-protocol", "statistics", "spss", "data-analysis", "ai-tools"]
+
+[[project.authors]]
+name = "Gan Lin"

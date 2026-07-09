@@ -1,0 +1,10 @@
+# One-click deploy on Render (free tier) -> public MCP endpoint at
+# https://<service>.onrender.com/mcp  (add as a custom connector in ChatGPT/Claude.ai)
+services:
+  - type: web
+    name: academic-stats-advisor
+    runtime: docker
+    plan: free
+    envVars:
+      - key: MCP_HTTP
+        value: "1"
