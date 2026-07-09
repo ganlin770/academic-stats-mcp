@@ -2,7 +2,7 @@
 
 An **MCP (Model Context Protocol) server** that lets an AI assistant — ChatGPT, Claude, Claude Code, Cursor, or any MCP client — **directly call** a statistician's decision logic instead of guessing. Point it at a study design and it returns the correct test, its assumptions, the SPSS menu path and R code, an APA reporting template, and an a-priori power analysis.
 
-Built by [Gan Lin](https://github.com/ganlin770). Dependency-light (only `mcp`), so it runs with a single command and deploys anywhere.
+Built by [Gan Lin](https://github.com/ganlin770). Dependency-light (only `mcp`), so it runs with a single command and deploys anywhere. (Repo `academic-stats-mcp`; server/package name `academic-stats-advisor`.)
 
 > ⚠️ Decision-support for people who already know some statistics. It does not run your data or replace a statistician — always verify assumptions against your own dataset.
 
@@ -57,7 +57,7 @@ Deploy the HTTP transport, then add the resulting `https://…/mcp` URL as a **c
 
 - **Render (free):** this repo includes `render.yaml` + `Dockerfile` → New ▸ Blueprint → pick the repo. Endpoint: `https://<service>.onrender.com/mcp`.
 - **Docker anywhere:** `docker build -t stats-mcp . && docker run -p 8000:8000 stats-mcp` → `http://<host>:8000/mcp`.
-- **FastMCP Cloud / Cloudflare Workers:** point them at `server.py` (HTTP mode).
+- **Any Python host:** `python server.py --http`, and set `PUBLIC_HOST=<your-domain>` so the Host check allows it (without it, DNS-rebinding protection is off so it still works behind any proxy).
 
 ## License
 

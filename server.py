@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["mcp>=1.2.0"]
+# dependencies = ["mcp>=1.12.2,<2"]
 # ///
 """
 academic-stats-advisor — an MCP server that lets an AI (ChatGPT / Claude / any
@@ -209,8 +209,13 @@ def _recommend(outcome_type, design, n_groups, normality, equal_variance):
         return ("spearman" if (nonparam or ot == "ordinal") else "pearson"), None
 
     if dz == "association" or ot == "nominal":
-        # categorical association
-        return "chi_square_independence", "Use Fisher's exact test instead if any expected cell count < 5 (esp. 2×2)."
+        # categorical outcome — route by design
+        if dz == "paired":
+            return "mcnemar", ("Paired/repeated categorical data. McNemar applies to a 2×2 table; for >2 categories "
+                               "use Stuart–Maxwell, and for >2 repeated binary measures use Cochran's Q.")
+        if dz == "one_sample":
+            return "chi_square_gof", "One categorical variable compared to expected proportions → goodness-of-fit."
+        return "chi_square_independence", "Two categorical variables → test of association. Use Fisher's exact test if any expected cell count < 5 (esp. 2×2)."
 
     if dz == "one_sample":
         return ("wilcoxon_signed_one" if nonparam else "one_sample_t"), None
@@ -340,6 +345,8 @@ def interpret_result(
     """
     if not 0.0 <= p_value <= 1.0:
         return {"error": "p_value must be between 0 and 1."}
+    if not 0.0 < alpha < 1.0:
+        return {"error": "alpha must be strictly between 0 and 1 (e.g. 0.05)."}
     sig = p_value < alpha
     verdict = (f"p = {p_value:g} < α = {alpha:g}: statistically significant — reject the null hypothesis."
                if sig else
@@ -349,7 +356,7 @@ def interpret_result(
         "Significance ≠ importance: always report and interpret the effect size and its 95% CI.",
         "p is not the probability the null is true, nor the probability of replication.",
     ]
-    if 0.01 <= abs(p_value - alpha) <= 0.02:
+    if abs(p_value - alpha) <= 0.01:
         cautions.append(f"p is close to α — avoid a hard 'significant/not' dichotomy; report the exact p and effect size.")
     es_note = None
     if effect_size is not None:
@@ -449,11 +456,30 @@ def list_supported_tests() -> dict:
 
 
 # --------------------------------------------------------------------------- #
-if __name__ == "__main__":
+def main() -> None:
     use_http = ("--http" in sys.argv) or os.environ.get("MCP_HTTP")
     if use_http:
+        from mcp.server.transport_security import TransportSecuritySettings
         mcp.settings.host = os.environ.get("HOST", "0.0.0.0")
         mcp.settings.port = int(os.environ.get("PORT", "8000"))
+        # FastMCP's DNS-rebinding protection defaults to localhost-only and returns
+        # HTTP 421 for any other Host header — which silently breaks every hosted deploy.
+        public = os.environ.get("PUBLIC_HOST", "").strip()  # e.g. myservice.onrender.com
+        if public:
+            mcp.settings.transport_security = TransportSecuritySettings(
+                enable_dns_rebinding_protection=True,
+                allowed_hosts=[public, f"{public}:*", "localhost", "localhost:*",
+                               "127.0.0.1", "127.0.0.1:*"],
+                allowed_origins=[f"https://{public}", f"http://{public}"],
+            )
+        else:
+            # No fixed public host set — disable the host check so it works behind any proxy.
+            mcp.settings.transport_security = TransportSecuritySettings(
+                enable_dns_rebinding_protection=False)
         mcp.run(transport="streamable-http")
     else:
         mcp.run()  # stdio (default) — for Claude Desktop / Claude Code / any local MCP client
+
+
+if __name__ == "__main__":
+    main()

@@ -19,6 +19,8 @@ check("paired, normal -> paired t", S._recommend("continuous","paired",2,"normal
 check("correlation, non-normal -> Spearman", S._recommend("continuous","correlation",2,"non_normal","unknown")[0]=="spearman")
 check("association nominal -> chi-square", S._recommend("nominal","association",2,"unknown","unknown")[0]=="chi_square_independence")
 check("count outcome -> count regression", S._recommend("count","independent",2,"unknown","unknown")[0]=="count_regression")
+check("nominal+paired -> McNemar", S._recommend("nominal","paired",2,"unknown","unknown")[0]=="mcnemar")
+check("nominal+one_sample -> goodness-of-fit", S._recommend("nominal","one_sample",1,"unknown","unknown")[0]=="chi_square_gof")
 
 print("== unit: inverse normal & power ==")
 check("_norm_ppf(0.975)≈1.95996", abs(S._norm_ppf(0.975)-1.959964)<1e-3)
@@ -31,6 +33,8 @@ check("r=0.3 -> ~84 total (GPower 84)", ssr["total_n"] in range(82,88))
 print("== unit: p-value interpreter guards ==")
 check("non-sig does not claim null true", "does NOT prove" in S.interpret_result(0.20)["interpretation"])
 check("sig rejects null", S.interpret_result(0.001)["significant"] is True)
+check("alpha out of range -> error", "error" in S.interpret_result(0.03, 1.5))
+check("p near alpha is flagged", any("close to" in c for c in S.interpret_result(0.049,0.05)["cautions"]))
 
 print("\n== integration: drive server over MCP stdio (as an AI client) ==")
 async def mcp_roundtrip():
