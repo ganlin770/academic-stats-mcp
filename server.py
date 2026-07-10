@@ -305,7 +305,7 @@ def recommend_test(
     return {
         "recommended_test": info["name"],
         "test_id": test_id,
-        "why": note or f"Given a {outcome_type} outcome, a {design} design"
+        "why": note or f"Given a {outcome_type} outcome, {'an' if design[0] in 'aeiou' else 'a'} {design} design"
                        + (f" with {n_groups} groups" if design in ("independent", "paired") else "")
                        + f", normality={normality}, equal_variance={equal_variance}.",
         "assumptions": _assumption_block(test_id),
